@@ -120,7 +120,6 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := WordsResponse{Words: words, Count: len(words)}
 
-
 	if !meaning {
 		for i := range response.Words {
 			response.Words[i].Meaning = nil
