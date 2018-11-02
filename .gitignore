@@ -48,4 +48,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# End of https://www.gitignore.io/api/go,macos
+# End of https://www.gitignore.io/api/go,macospackage-lock.json
+package-lock.json

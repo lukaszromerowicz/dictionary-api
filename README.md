@@ -43,3 +43,61 @@ Example response:
 	]
 }
 ```
+
+`/words?letters=cod&size=3`
+
+Returns a list of words that can be matched with a length of **3** or more.
+
+Example response: 
+
+```json
+{
+	"Count": 6,
+	"Words": [
+		{
+			"Word": "cod",
+			"Length": 3
+		}
+	]
+}
+```
+
+`/words?letters=cod&limit=2`
+
+Returns a list of words limited to **2**, that can be built from the string **code**
+
+Example response: 
+
+```json
+{
+	"Count": 6,
+	"Words": [
+		{
+			"Word": "cod",
+			"Length": 3
+		},
+		{
+			"Word": "do",
+			"Length": 2
+		}
+	]
+}
+```
+
+`/definition?word=cod`
+
+Returns a single word that matches the search string **cod** this contains a meaning property which has an array of possible meanings
+
+Example response: 
+
+```json
+{
+	"Word": [
+		{
+			"Word": "cod",
+			"Length": 3,
+			"Meaning" : ["A husk; a pod; as, a peascod.","A small bag or pouch.","The scrotum.","A pillow or cushion.","An important edible fish (Gadus morrhua), taken in immense numbers on the northern coasts of Europe and America. It is especially abundant and large on the Grand Bank of Newfoundland. It is salted and dried in large quantities."]
+		}
+	]
+}
+```
