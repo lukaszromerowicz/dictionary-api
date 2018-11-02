@@ -64,7 +64,7 @@ Example response:
 
 `/words?letters=cod&limit=2`
 
-Returns a list of words limited to **2**, that can be built from the string **code**
+Returns a list of words that have been limited to **2**
 
 Example response: 
 
