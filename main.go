@@ -71,6 +71,27 @@ func (wordList *WordList) findWords(letters string) ([]Word, error) {
 	return words, nil
 }
 
+func (wordList *WordList) definitionHandler(w http.ResponseWriter, r *http.Request) {
+	(w).Header().Set("Access-Control-Allow-Origin", "*")
+	requestedWord := r.URL.Query().Get("word")
+	var foundWord *Word
+
+	for _, word := range wordList.Words {
+		if word.Word == requestedWord {
+			word.Length = len(word.Word)
+			foundWord = &word
+			break
+		}
+	}
+
+	if foundWord == nil {
+		json.NewEncoder(w).Encode("Word not found.")
+		return
+	}
+	
+	json.NewEncoder(w).Encode(foundWord)
+}
+
 func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 	(w).Header().Set("Access-Control-Allow-Origin", "*")
 	letters := r.URL.Query().Get("letters")	
@@ -108,5 +129,6 @@ func main() {
 	}
 
 	http.HandleFunc("/words", wordList.wordsHandler)
+	http.HandleFunc("/definition", wordList.definitionHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
