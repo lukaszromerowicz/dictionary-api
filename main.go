@@ -8,56 +8,28 @@ import (
 	"os"
 	"regexp"
 	"sort"
-	"fmt"
-	"time"
 	"strings"
 )
 
-type DictionaryEntry interface {
-	keyword() string
-	length() int
-}
-
 type WordsResponse struct {
 	Count int
-	Words []DictionaryEntry
+	Words []Word
 }
 
 type Word struct {
 	Word   string
 	Length int
-	Meaning []string
-}
-
-type WordWithoutMeaning struct {
-	Word string
-	Length int
+	Meaning []string `json:",omitempty"`
 }
 
 type WordList struct {
 	Words []Word
 }
 
-func (word Word) keyword() string {
-	return word.Word
-}
-
-func (word Word) length() int {
-	return word.Length
-}
-
-func (word WordWithoutMeaning) keyword() string {
-	return word.Word
-}
-
-func (word WordWithoutMeaning) length() int {
-	return word.Length
-}
-
 func mapWords() (WordList, error) {
 	var dictionaryWords WordList
 
-	file, err := os.Open("words_new_parsed.json")
+	file, err := os.Open("words.json")
 	if err != nil {
 		return dictionaryWords, err
 	}
@@ -68,9 +40,8 @@ func mapWords() (WordList, error) {
 	return dictionaryWords, nil
 }
 
-func (wordList *WordList) findWords(letters string) ([]DictionaryEntry, error) {
-	words := make([]DictionaryEntry, 0)
-	start := time.Now()
+func (wordList *WordList) findWords(letters string) ([]Word, error) {
+	words := make([]Word, 0)
 	letters = strings.ToLower(letters)
 
 	for _, word := range wordList.Words {
@@ -94,11 +65,9 @@ func (wordList *WordList) findWords(letters string) ([]DictionaryEntry, error) {
 	}
 
 	sort.Slice(words, func(i, j int) bool {
-		return words[i].length() > words[j].length()
+		return words[i].Length > words[j].Length
 	})
 	
-	fmt.Println(time.Since(start))
-
 	return words, nil
 }
 
@@ -118,13 +87,10 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 	response := WordsResponse{Words: words, Count: len(words)}
 
 	if !meaning {
-		wordsWithoutMeaning := make([]DictionaryEntry, 0)
-
-		for _, word := range words {
-			wordsWithoutMeaning = append(wordsWithoutMeaning, WordWithoutMeaning{ Word: word.keyword(), Length: word.length()})
+		for i := range response.Words {
+			response.Words[i].Meaning = nil
 		}
-		response = WordsResponse{Words: wordsWithoutMeaning, Count: len(wordsWithoutMeaning)}
-	} 
+	}
 
 
 	if err != nil {
