@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"strconv"
 )
 
 type WordsResponse struct {
@@ -40,12 +41,15 @@ func mapWords() (WordList, error) {
 	return dictionaryWords, nil
 }
 
-func (wordList *WordList) findWords(letters string) ([]Word, error) {
+func (wordList *WordList) findWords(letters string, maxSize int) ([]Word, error) {
 	words := make([]Word, 0)
 	letters = strings.ToLower(letters)
 
 	for _, word := range wordList.Words {
 		wordLetters := strings.Split(word.Word, "")
+		if len(wordLetters) < maxSize {
+			continue
+		}
 		otherLetters := make([]string, 0)
 		currentSearchLetters := letters
 		
@@ -96,6 +100,8 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 	(w).Header().Set("Access-Control-Allow-Origin", "*")
 	letters := r.URL.Query().Get("letters")	
 	meaning := r.URL.Query().Get("meaning") == "true"
+	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+
 	matched, err := regexp.MatchString("^[a-zA-Z]+$", letters)
 
 	if !matched {
@@ -104,7 +110,7 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	words, err := wordList.findWords(letters)
+	words, err := wordList.findWords(letters, size)
 	response := WordsResponse{Words: words, Count: len(words)}
 
 	if !meaning {
@@ -112,7 +118,6 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 			response.Words[i].Meaning = nil
 		}
 	}
-
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
