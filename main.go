@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"strconv"
+	"fmt"
 )
 
 type WordsResponse struct {
@@ -101,6 +102,7 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 	letters := r.URL.Query().Get("letters")	
 	meaning := r.URL.Query().Get("meaning") == "true"
 	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 
 	matched, err := regexp.MatchString("^[a-zA-Z]+$", letters)
 
@@ -111,7 +113,13 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	words, err := wordList.findWords(letters, size)
+	fmt.Println(limit)
+	if limit > 0 && len(words) >= limit {
+		words = words[0: limit]
+	}
+
 	response := WordsResponse{Words: words, Count: len(words)}
+
 
 	if !meaning {
 		for i := range response.Words {
