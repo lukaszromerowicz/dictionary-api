@@ -48,13 +48,6 @@ func mapWords() (WordList, error) {
 
 func (wordList *WordList) findWords(letters string, maxSize int) ([]Word, error) {
 	words := make([]Word, 0)
-	letters = strings.ToLower(letters)
-	letters = strutil.SortString(letters)
-
-	cachedWords, found := Cache.Get(letters)
-	if found {
-		return cachedWords.([]Word), nil
-	}
 
 	for _, word := range wordList.Words {
 		wordLetters := strings.Split(word.Word, "")
@@ -83,8 +76,6 @@ func (wordList *WordList) findWords(letters string, maxSize int) ([]Word, error)
 		return words[i].Length > words[j].Length
 	})
 
-	Cache.Set(letters, words, cache.NoExpiration)
-
 	return words, nil
 }
 
@@ -112,11 +103,7 @@ func (wordList *WordList) definitionHandler(w http.ResponseWriter, r *http.Reque
 func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 	(w).Header().Set("Access-Control-Allow-Origin", "*")
 	letters := r.URL.Query().Get("letters")	
-	meaning := r.URL.Query().Get("meaning") == "true"
-	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-
-	matched, err := regexp.MatchString("^[a-zA-Z]+$", letters)
+	matched, _ := regexp.MatchString("^[a-zA-Z]+$", letters)
 
 	if !matched {
 		w.WriteHeader(http.StatusBadRequest)
@@ -124,24 +111,42 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	words, err := wordList.findWords(letters, size)
-	if limit > 0 && len(words) >= limit {
-		words = words[0: limit]
-	}
+	meaning := r.URL.Query().Get("meaning") == "true"
+	size, _ := strconv.Atoi(r.URL.Query().Get("size"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	
+	letters = strings.ToLower(letters)
+	letters = strutil.SortString(letters)
+	query := strings.Join([]string{letters,r.URL.Query().Get("size"),r.URL.Query().Get("limit"),r.URL.Query().Get("meaning")}, ",")
+	response := WordsResponse{}
 
-	response := WordsResponse{Words: append([]Word(nil), words...), Count: len(words)}
+	cachedWords, found := Cache.Get(query)
+	if found {
+		response = WordsResponse{Words: cachedWords.([]Word), Count: len(cachedWords.([]Word))}
+	} else {
+		words, err := wordList.findWords(letters, size)
 
-	if !meaning {
-		for i := range response.Words {
-			response.Words[i].Meaning = nil
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
+
+		if limit > 0 && len(words) >= limit {
+			words = words[0: limit]
+		}
+	
+		response = WordsResponse{Words: words, Count: len(words)}
+	
+		if !meaning {
+			for i := range response.Words {
+				response.Words[i].Meaning = nil
+			}
+		}
+
+		Cache.Set(query, words, 24*time.Hour)
 	}
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
