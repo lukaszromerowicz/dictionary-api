@@ -11,7 +11,12 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
+	"github.com/patrickmn/go-cache"
+	"time"
+	"github.com/lukaszromerowicz/dictionary-api/strutil"
 )
+
+var Cache *cache.Cache 
 
 type WordsResponse struct {
 	Count int
@@ -45,6 +50,12 @@ func mapWords() (WordList, error) {
 func (wordList *WordList) findWords(letters string, maxSize int) ([]Word, error) {
 	words := make([]Word, 0)
 	letters = strings.ToLower(letters)
+	letters = strutil.SortString(letters)
+
+	cachedWords, found := Cache.Get(letters)
+	if found {
+		return cachedWords.([]Word), nil
+	}
 
 	for _, word := range wordList.Words {
 		wordLetters := strings.Split(word.Word, "")
@@ -72,6 +83,8 @@ func (wordList *WordList) findWords(letters string, maxSize int) ([]Word, error)
 	sort.Slice(words, func(i, j int) bool {
 		return words[i].Length > words[j].Length
 	})
+
+	Cache.Set(letters, words, cache.NoExpiration)
 	
 	return words, nil
 }
@@ -139,6 +152,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	Cache = cache.New(5*time.Minute, 10*time.Minute)
 
 	http.HandleFunc("/words", wordList.wordsHandler)
 	http.HandleFunc("/definition", wordList.definitionHandler)
