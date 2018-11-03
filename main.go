@@ -84,7 +84,7 @@ func (wordList *WordList) findWords(letters string, maxSize int) ([]Word, error)
 	})
 
 	Cache.Set(letters, words, cache.NoExpiration)
-	
+
 	return words, nil
 }
 
@@ -129,7 +129,7 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 		words = words[0: limit]
 	}
 
-	response := WordsResponse{Words: words, Count: len(words)}
+	response := WordsResponse{Words: append([]Word(nil), words...), Count: len(words)}
 
 	if !meaning {
 		for i := range response.Words {
