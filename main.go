@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 	"strconv"
-	"fmt"
 	"github.com/patrickmn/go-cache"
 	"time"
 	"github.com/lukaszromerowicz/dictionary-api/strutil"
@@ -126,7 +125,6 @@ func (wordList *WordList) wordsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	words, err := wordList.findWords(letters, size)
-	fmt.Println(limit)
 	if limit > 0 && len(words) >= limit {
 		words = words[0: limit]
 	}
